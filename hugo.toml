@@ -5,9 +5,6 @@ defaultContentLanguage = "en"
 languageCode = "en"
 title = "Binary Sunset"
 
-[frontmatter]
-  order = "desc"
-
 # Change the default theme to be use when building the site with Hugo
 theme = "DoIt"
 
