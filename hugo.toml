@@ -551,12 +551,12 @@ theme = "DoIt"
 
   #  Analytics config
   [params.analytics]
-    enable = false
+    enable = true
     # Google Analytics
     [params.analytics.google]
-      id = ""
+      id = "G-7H62173K1F"
       # whether to anonymize IP
-      anonymizeIP = true
+      anonymizeIP = false
     # Fathom Analytics
     [params.analytics.fathom]
       id = ""
