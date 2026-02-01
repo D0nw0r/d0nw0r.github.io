@@ -6,11 +6,12 @@ subtitle = 'Exploring exported functions on Rust DLLs'
 +++
 <!--more-->
 
-# Rust DLL Export Quirks
+
+## Rust DLL Export Quirks
 
 Another blog post about DLLs? Well, it wasn't planned at all! But let's get into it.
 
-When exporting functions on a Rust DLL, the functions it calls are also exported and show on the PE exports.
+When exporting functions on a Rust DLL, the functions it calls are also exported and shown on the PE exports.
 
 Example:
 
@@ -58,16 +59,19 @@ fn hello() {
     println!("Hello, world!");
 }
 ```
-
-The DLL exported function appears to be lib_main, however all the other functions called from it also show:
+In C/CPP the exported function would be `lib_main`, however, this is not the case in Rust.
+As we can see, all the other functions called from `lib_main` also shown as exported in the final PE:
 <br>
 <br>
 <img src="/images/before.png" alt="library usage" style="max-width: 400px; border-radius: 8px;">
 <br>
 
 
+## Why does this matter?
+Well, for malware development, we don't want to expose more than intended on our PE. This includes having fine control on exported functions.
 
-To avoid unnecessary exports, can put all the implant logic into a Rust Library lib.rs file, and mark that entry as `extern "system"`.
+After some tweaking, I found a way to work arround this.
+To avoid unnecessary exports, we can bundle all functionality (for example of an implant/loader)into a **Rust Library** `lib.rs` (not the DLL file which is also called `lib.rs`), and mark the entry point of the library as `extern "system"`.
 
 ```Rust
 // lib/src/lib.rs
@@ -75,12 +79,9 @@ To avoid unnecessary exports, can put all the implant logic into a Rust Library 
 use windows_sys::Win32::{
     Foundation::HMODULE,
 };
-
   
-
 pub type BOOL = i32;
  
-
 #[unsafe(no_mangle)]
 #[allow(non_snake_case)]
 pub extern "system" fn DllMain(
@@ -97,8 +98,8 @@ pub extern "C" fn run_me() {
     run_from_lib();
 }
 ```
-
-Inside that function all the other calls **coming from other modules** will not be exported.
+Additionally, it is required to split functionality across other modules (as seen below).
+Inside the `"extern"` function, all the other function calls **coming from other modules** will not be shown as exported in the PE.
 
 ```Rust
 // lib/src/other.rs
@@ -119,8 +120,7 @@ pub fn run_from_lib()  {
 <br>
 
 
-The two calls here are only from the DLL exported function and the **first** function from `lib.rs` which is `run_from_lib`.
-
+The two calls shown above are only from the DLL exported function and the `"extern"` function from `lib.rs` which is `run_from_lib`.
 Unlike the previous example where subsequent calls inside the `Pick` function (like `hello`) showed as exported too.
 
 
